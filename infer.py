@@ -64,12 +64,12 @@ def predict(image_path):
     with torch.no_grad():  # Disable gradient calculations for inference
         outputs = model(image)
         _, predicted = torch.max(outputs, 1)
-
     predicted_class = class_names[predicted.item()]
     print(f"Predicted Class: {predicted_class}")
     return predicted_class
 
 # Run inference
 if __name__ == "__main__":
-    image_path = "FILE_PATH"  # Change this to the path of your image
+    image_path = "data/img.jpg"
+   # Change this to the path of your image
     predict(image_path)

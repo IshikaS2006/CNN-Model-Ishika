@@ -15,7 +15,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 # Define dataset path
-dataset_path = "/add_base_path/plant/data"
+dataset_path = "Dataset\processed_images"
 
 # Image transformations (Normalization & Augmentation)
 transform = transforms.Compose([
