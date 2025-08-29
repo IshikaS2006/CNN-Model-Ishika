@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 from PIL import Image
+import matplotlib.pyplot as plt 
 
 # Define the CNN Model (Must match the trained model)
 class CNNModel(nn.Module):
@@ -66,10 +67,39 @@ def predict(image_path):
         _, predicted = torch.max(outputs, 1)
     predicted_class = class_names[predicted.item()]
     print(f"Predicted Class: {predicted_class}")
+    if predicted_class == "Tomato___Bacterial_spot":
+        print("Treat seed with New Improved Ceresan or use disease-free plants. ")
     return predicted_class
+
+def visualize_feature_maps(model, image_path):
+    image = preprocess_image(image_path)  # from your existing code
+    outputs = []
+
+    def hook(module, input, output):
+        outputs.append(output.detach().cpu())
+
+    # Register hook on each convolutional layer
+    model.conv1.register_forward_hook(hook)
+    model.conv2.register_forward_hook(hook)
+    model.conv3.register_forward_hook(hook)
+
+    # Forward pass
+    model(image)
+
+    # Plot feature maps from each conv layer
+    for idx, feature_map in enumerate(outputs):
+        fig, axes = plt.subplots(1, 6, figsize=(15, 5))
+        fig.suptitle(f"Feature Maps from Conv{idx+1}", fontsize=14)
+        for i in range(6):  # show first 6 feature maps
+            axes[i].imshow(feature_map[0, i].numpy(), cmap="gray")
+            axes[i].axis("off")
+        plt.show()
+
+# Example usage
+visualize_feature_maps(model, "data/image.png")
 
 # Run inference
 if __name__ == "__main__":
-    image_path = "data/img.jpg"
+    image_path = "data/image.png"
    # Change this to the path of your image
     predict(image_path)
