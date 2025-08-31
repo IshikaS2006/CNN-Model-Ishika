@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Tomato Disease Prediction</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 40px;
+      }
+      #result {
+        margin-top: 20px;
+        font-size: 1.2em;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Upload Tomato Leaf Image</h2>
+    <input type="file" id="imageInput" accept="image/*" />
+    <button id="predictBtn">Predict</button>
+    <p id="result"></p>
+
+    <script>
+      document.getElementById("predictBtn").onclick = async function () {
+        const input = document.getElementById("imageInput");
+        const result = document.getElementById("result");
+        if (!input.files.length) {
+          result.textContent = "Please select an image.";
+          return;
+        }
+        const formData = new FormData();
+        formData.append("file", input.files[0]);
+        result.textContent = "Predicting...";
+        try {
+          const response = await fetch("/predict", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await response.json();
+          if (data.label && data.confidence !== undefined) {
+            result.textContent = `Prediction: ${data.label} (Confidence: ${(
+              data.confidence * 100
+            ).toFixed(2)}%)`;
+          } else if (data.error) {
+            result.textContent = "Error: " + data.error;
+          } else {
+            result.textContent = "Unexpected response.";
+          }
+        } catch (err) {
+          result.textContent = "Request failed.";
+        }
+      };
+    </script>
+  </body>
+</html>

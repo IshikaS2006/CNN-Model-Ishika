@@ -3,6 +3,32 @@ import torch.nn as nn
 import torchvision.transforms as transforms
 from PIL import Image
 import matplotlib.pyplot as plt 
+import os
+
+def predict_pil(image: Image.Image):
+    # Load model architecture and weights
+    num_classes = len(class_names)
+    model = CNNModel(num_classes=num_classes)
+    model.load_state_dict(torch.load("tomato_disease_model.pth", map_location="cpu"))
+    model.eval()
+
+    # Preprocessing (same as training)
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+    ])
+    image = image.convert("RGB")
+    input_tensor = transform(image).unsqueeze(0)  # Add batch dimension
+
+    # Inference
+    with torch.no_grad():
+        outputs = model(input_tensor)
+        probabilities = torch.softmax(outputs, dim=1)
+        confidence, predicted_idx = torch.max(probabilities, 1)
+        predicted_class = class_names[predicted_idx.item()]
+        confidence = confidence.item()
+    return {"label": predicted_class, "confidence": confidence}
 
 # Define the CNN Model (Must match the trained model)
 class CNNModel(nn.Module):
@@ -54,6 +80,11 @@ transform = transforms.Compose([
 
 # Function to preprocess the image
 def preprocess_image(image_path):
+    # Make image path robust to working directory
+    if not os.path.isabs(image_path):
+        # Get project root (parent of this file)
+        project_root = os.path.dirname(os.path.abspath(__file__))
+        image_path = os.path.join(project_root, image_path)
     image = Image.open(image_path).convert("RGB")  # Ensure image is in RGB mode
     image = transform(image)  # Apply transformations
     image = image.unsqueeze(0)  # Add batch dimension
@@ -72,7 +103,7 @@ def predict(image_path):
     return predicted_class
 
 def visualize_feature_maps(model, image_path):
-    image = preprocess_image(image_path)  # from your existing code
+    image = preprocess_image(image_path)  # robust path
     outputs = []
 
     def hook(module, input, output):
@@ -87,19 +118,18 @@ def visualize_feature_maps(model, image_path):
     model(image)
 
     # Plot feature maps from each conv layer
-    for idx, feature_map in enumerate(outputs):
-        fig, axes = plt.subplots(1, 6, figsize=(15, 5))
-        fig.suptitle(f"Feature Maps from Conv{idx+1}", fontsize=14)
-        for i in range(6):  # show first 6 feature maps
-            axes[i].imshow(feature_map[0, i].numpy(), cmap="gray")
-            axes[i].axis("off")
-        plt.show()
+    # for idx, feature_map in enumerate(outputs):
+    #     fig, axes = plt.subplots(1, 6, figsize=(15, 5))
+    #     fig.suptitle(f"Feature Maps from Conv{idx+1}", fontsize=14)
+    #     for i in range(6):  # show first 6 feature maps
+    #         axes[i].imshow(feature_map[0, i].numpy(), cmap="gray")
+    #         axes[i].axis("off")
+    #     plt.show()
 
 # Example usage
-visualize_feature_maps(model, "data/image.png")
+visualize_feature_maps(model, "data/img1.jpg")
 
 # Run inference
 if __name__ == "__main__":
-    image_path = "data/image.png"
-   # Change this to the path of your image
+    image_path = os.path.join("data", "img1.jpg")
     predict(image_path)

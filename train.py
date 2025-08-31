@@ -132,4 +132,16 @@ train_model(model, train_loader, val_loader, criterion, optimizer, epochs=20)
 
 # Save the trained model
 torch.save(model.state_dict(), "tomato_disease_model.pth")
-print("Model saved successfully!")
+
+print("Model saved successfully as 'model.pth'!")
+
+# Example: Load model architecture and weights for inference
+def load_trained_model(model_path, num_classes):
+    model = CNNModel(num_classes=num_classes)
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.to(device)
+    model.eval()
+    return model
+
+# Usage:
+# loaded_model = load_trained_model("model.pth", num_classes)
